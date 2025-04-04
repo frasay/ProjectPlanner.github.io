@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Project Planner | Digital PM Tool</title>
+<meta content="Project Planner | Digital PM Tool" property="og:title"/>
+<meta content="A sleek, interactive tool for mastering digital project management methodologies." property="og:description"/>
+<meta content="assets/sprite_64x64_a67e4c80.png" property="og:image"/>
+<meta content="website" property="og:type"/>
+<link href="assets/sprite_32x32_a67e4c80.png" rel="icon" type="image/png"/>
+<script src="assets/script_65eec164.js"></script>
+<link href="assets/style_ee28afc1.css" rel="stylesheet"/>
+<!-- Using Font Awesome CDN directly for simplicity and reliability -->
+<link crossorigin="anonymous" href="assets/style_8b45b85f.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" referrerpolicy="no-referrer" rel="stylesheet">
+<script crossorigin="anonymous" integrity="sha512-GWzVrcGlo0TxTRvz9ttioyYJ+Wwk9Ck0G81D+eO63BaqHaJ3YZX9wuqjwgfcV/MrB2PhaVX9DkYVhbFpStnqpQ==" referrerpolicy="no-referrer" src="assets/script_15a48f10.js"></script>
+<script src="assets/script_1f03f16c.js"></script> <!-- Chart.js for visualizations -->
+<!-- jsPDF for PDF Generation -->
+<script src="assets/script_dd3b4869.js"></script>
+<!-- Animate.css for subtle animations -->
+<link href="assets/style_04c8b4e1.css" rel="stylesheet">
+<script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        },
+                        accent: {
+                            red: '#E53E3E',
+                            green: '#10B981',
+                            yellow: '#F59E0B',
+                            purple: '#8B5CF6',
+                        },
+                        dark: '#111827',
+                        light: '#F9FAFB',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Montserrat', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'sharp': '0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.12)',
+                        'hover': '0 10px 25px rgba(0, 0, 0, 0.15), 0 5px 10px rgba(0, 0, 0, 0.05)',
+                    },
+                }
+            }
+        }
+    </script>
+<style>
+        html { scroll-behavior: smooth; }
+        body { background-color: #F9FAFB; }
+        details { transition: all 0.3s ease; }
+        details > summary { list-style: none; transition: all 0.3s ease; }
+        details > summary::-webkit-details-marker { display: none; }
+        details[open] > summary { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+        details[open] { box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15); transform: translateY(-2px); }
+        details > div { overflow: hidden; transition: all 0.3s ease; }
+        .loader { border: 3px solid rgba(14, 165, 233, 0.1); border-top: 3px solid #0ea5e9; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; display: inline-block; margin-left: 10px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .tooltip { position: relative; display: inline-block; }
+        .tooltip .tooltiptext { visibility: hidden; width: 200px; background-color: #111827; color: #fff; text-align: center; border-radius: 6px; padding: 8px; position: absolute; z-index: 1; bottom: 125%; left: 50%; margin-left: -100px; opacity: 0; transition: opacity 0.3s; font-size: 0.875rem; }
+        .tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
+        .custom-checkbox { appearance: none; -webkit-appearance: none; width: 18px; height: 18px; border: 2px solid #0ea5e9; border-radius: 4px; outline: none; transition: all 0.2s ease; position: relative; cursor: pointer; vertical-align: middle; flex-shrink: 0; }
+        .custom-checkbox:checked { background-color: #0ea5e9; }
+        .custom-checkbox:checked::after { content: '✓'; position: absolute; color: white; font-size: 14px; top: -2px; left: 3px; }
+        .progress-bar { height: 8px; background-color: #e0f2fe; border-radius: 4px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; background-color: #0ea5e9; transition: width 0.5s ease; }
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15); }
+        .tab-active { color: #0ea5e9; border-bottom: 2px solid #0ea5e9; }
+        .timeline-container { position: relative; }
+        .timeline-container::before { content: ''; position: absolute; width: 2px; background-color: #e0f2fe; top: 0; bottom: 0; left: 24px; }
+        .timeline-item { position: relative; padding-left: 50px; margin-bottom: 20px; }
+        .timeline-dot { position: absolute; width: 20px; height: 20px; left: 15px; border-radius: 50%; background-color: #0ea5e9; top: 4px; }
+        button:focus, a:focus, input:focus, select:focus, textarea:focus, [tabindex]:focus { outline: 2px solid #0ea5e9; outline-offset: 2px; }
+        .skip-link { position: absolute; top: -40px; left: 0; background: #0ea5e9; color: white; padding: 8px; z-index: 100; transition: top 0.3s ease; }
+        .skip-link:focus { top: 0; }
+        details summary .fa-chevron-down { transition: transform 0.3s ease; }
+        details[open] summary .fa-chevron-down { transform: rotate(180deg); }
+    </style>
+</link></link><script>
+            window.load_data_from_csv = (filename) => {
+                // Implementation needed when code is downloaded
+            };
+
+            window.save_data_to_csv = (filename, data) => {
+                // Implementation needed when code is downloaded
+            };
+
+            window.call_llm = (system_prompt, user_messages, json_fields) => {
+                // Implementation needed when code is downloaded
+            };
+        </script></head>
+<body class="font-sans text-dark leading-relaxed">
+<a class="skip-link" href="#main-content">Skip to content</a>
+<div class="container mx-auto px-4 py-12 max-w-5xl relative">
+<header class="text-center mb-16 relative">
+<!-- Removed the red line div -->
+<h1 class="text-4xl md:text-5xl font-display font-bold text-dark mb-3">Project <span class="text-brand-600">Planner</span></h1>
+<p class="text-xl text-dark/80 max-w-2xl mx-auto">A practical toolkit for navigating digital project management with confidence.</p>
+<div class="mt-8 flex flex-wrap justify-center gap-4">
+<a class="px-6 py-3 bg-brand-600 text-white rounded-lg font-medium hover:bg-brand-700 transition-all shadow-sharp hover:shadow-hover focus:ring-2 focus:ring-brand-300" href="#methodology">Explore Methodologies</a>
+<a class="px-6 py-3 bg-white text-brand-600 border-2 border-brand-600 rounded-lg font-medium hover:bg-brand-50 transition-all shadow-sharp hover:shadow-hover focus:ring-2 focus:ring-brand-300" href="#generator">Generate Checklist</a>
+</div>
+</header>
+<nav class="mb-12 sticky top-4 z-10">
+<div class="bg-white rounded-lg shadow-sharp px-4 py-2 flex justify-between items-center overflow-x-auto">
+<div class="flex space-x-1 md:space-x-4">
+<a class="px-3 py-2 text-sm md:text-base font-medium hover:text-brand-600 transition-colors whitespace-nowrap" href="#intro">Introduction</a>
+<a class="px-3 py-2 text-sm md:text-base font-medium hover:text-brand-600 transition-colors whitespace-nowrap" href="#waterfall">Waterfall</a>
+<a class="px-3 py-2 text-sm md:text-base font-medium hover:text-brand-600 transition-colors whitespace-nowrap" href="#agile">Agile</a>
+<a class="px-3 py-2 text-sm md:text-base font-medium hover:text-brand-600 transition-colors whitespace-nowrap" href="#hybrid">Hybrid</a>
+<a class="px-3 py-2 text-sm md:text-base font-medium hover:text-brand-600 transition-colors whitespace-nowrap" href="#skills">PM Skills</a>
+</div>
+<div>
+<a class="px-3 py-2 text-sm md:text-base font-medium text-accent-red hover:text-accent-red/80 transition-colors whitespace-nowrap" href="#generator">Checklist Generator</a>
+</div>
+</div>
+</nav>
+<main class="space-y-12" id="main-content">
+<!-- Introduction -->
+<section class="scroll-mt-20" id="intro">
+<div class="bg-white rounded-xl shadow-sharp overflow-hidden border-l-4 border-brand-600">
+<div class="p-6 md:p-8">
+<h2 class="text-2xl md:text-3xl font-display font-bold text-dark mb-6 flex items-center">
+<span class="inline-block w-10 h-10 rounded-full bg-brand-600/10 mr-3 flex items-center justify-center">
+<i class="fas fa-compass text-brand-600"></i>
+</span>
+                            Your Role as a Digital PM
+                        </h2>
+<div class="grid md:grid-cols-2 gap-8">
+<div class="space-y-4">
+<p class="text-dark/80">As a Digital Project Manager, you orchestrate the creation of digital products while balancing the classic project management constraints:</p>
+<div class="relative h-64 w-full">
+<canvas class="mx-auto" id="pmTriangle"></canvas>
+</div>
+<p class="text-sm text-dark/70 italic text-center">Click on any vertex to see its description and typical impact on other constraints.</p>
+<div class="bg-brand-50 border border-brand-200 rounded-lg p-4 text-sm hidden animate__animated animate__fadeIn" id="triangleInfo">
+<h4 class="font-semibold text-brand-700 mb-1" id="triangleInfoTitle">Scope</h4>
+<p id="triangleInfoText">The work that needs to be done to deliver the project's product or service.</p>
+<p class="mt-2 font-semibold">Impact:</p>
+<p id="triangleInfoImpactText">Expanding scope often leads to longer timelines and higher costs.</p>
+</div>
+</div>
+<div class="space-y-4">
+<h3 class="text-xl font-semibold text-dark">Key Responsibilities</h3>
+<div class="space-y-3">
+<div class="flex items-start">
+<div class="mt-1 mr-4 w-8 h-8 rounded-full bg-accent-green/10 flex items-center justify-center flex-shrink-0"><i class="fas fa-bullseye text-accent-green text-sm"></i></div>
+<div><h4 class="font-medium">Strategic Planning</h4><p class="text-sm text-dark/80">Defining project scope, objectives, deliverables, and success criteria.</p></div>
+</div>
+<div class="flex items-start">
+<div class="mt-1 mr-4 w-8 h-8 rounded-full bg-accent-red/10 flex items-center justify-center flex-shrink-0"><i class="fas fa-users text-accent-red text-sm"></i></div>
+<div><h4 class="font-medium">Team Leadership</h4><p class="text-sm text-dark/80">Managing resources, facilitating collaboration, and removing obstacles.</p></div>
+</div>
+<div class="flex items-start">
+<div class="mt-1 mr-4 w-8 h-8 rounded-full bg-accent-yellow/10 flex items-center justify-center flex-shrink-0"><i class="fas fa-chart-line text-accent-yellow text-sm"></i></div>
+<div><h4 class="font-medium">Progress Tracking</h4><p class="text-sm text-dark/80">Monitoring milestones, managing risks, and ensuring quality standards.</p></div>
+</div>
+<div class="flex items-start">
+<div class="mt-1 mr-4 w-8 h-8 rounded-full bg-brand-600/10 flex items-center justify-center flex-shrink-0"><i class="fas fa-comments text-brand-600 text-sm"></i></div>
+<div><h4 class="font-medium">Stakeholder Communication</h4><p class="text-sm text-dark/80">Managing expectations, reporting progress, and facilitating decisions.</p></div>
+</div>
+</div>
+<div class="bg-light rounded-xl p-4 border-l-2 border-brand-600"><p class="text-sm"><span class="font-semibold">Pro Tip:</span> Your methodology choice should match your project's needs, team culture, and client expectations—not the other way around.</p></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Methodology Section -->
+<section class="scroll-mt-20" id="methodology">
+<h2 class="text-2xl md:text-3xl font-display font-bold text-dark mb-6">Project Methodologies</h2>
+<p class="text-lg text-dark/80 mb-8">Choose the right approach for your digital project based on requirements, timeline, and team structure.</p>
+<!-- Waterfall Methodology -->
+<div class="scroll-mt-20 mb-8" id="waterfall">
+<details class="bg-white rounded-xl shadow-sharp overflow-hidden border-l-4 border-brand-600">
+<summary class="p-6 cursor-pointer font-semibold text-xl text-dark hover:bg-light/50 flex justify-between items-center transition-colors duration-200">
+<span class="flex items-center"><span class="inline-block w-10 h-10 rounded-full bg-brand-600/10 mr-3 flex items-center justify-center"><i class="fas fa-water text-brand-600"></i></span>Waterfall Methodology</span><i class="fas fa-chevron-down"></i>
+</summary>
+<div class="p-6 border-t border-light">
+<div class="grid md:grid-cols-2 gap-8">
+<div>
+<h3 class="text-lg font-semibold text-dark mb-3">Overview</h3>
+<p class="mb-4 text-dark/80">Waterfall is a linear, sequential approach where each phase must be completed before the next begins. It's best for projects with well-defined requirements that are unlikely to change.</p>
+<div class="flex items-center justify-between mb-6 bg-light rounded-xl p-4">
+<div class="text-center px-2"><div class="text-brand-600 font-semibold">Predictability</div><div class="mt-2 w-full bg-gray-200 rounded-full h-2"><div class="bg-brand-600 h-2 rounded-full" style="width: 90%"></div></div></div>
+<div class="text-center px-2"><div class="text-accent-red font-semibold">Flexibility</div><div class="mt-2 w-full bg-gray-200 rounded-full h-2"><div class="bg-accent-red h-2 rounded-full" style="width: 30%"></div></div></div>
+<div class="text-center px-2"><div class="text-accent-green font-semibold">Documentation</div><div class="mt-2 w-full bg-gray-200 rounded-full h-2"><div class="bg-accent-green h-2 rounded-full" style="width: 95%"></div></div></div>
+</div>
+<h3 class="text-lg font-semibold text-dark mb-3">Best For</h3>
+<ul class="space-y-2 mb-6">
+<li class="flex items-center"><i class="fas fa-check-circle text-accent-green mr-2"></i>Projects with stable, well-understood requirements</li>
+<li class="flex items-center"><i class="fas fa-check-circle text-accent-green mr-2"></i>Regulatory environments requiring extensive documentation</li>
+<li class="flex items-center"><i class="fas fa-check-circle text-accent-green mr-2"></i>Projects with fixed scope, budget, and timeline</li>
+<li class="flex items-center"><i class="fas fa-check-circle text-accent-green mr-2"></i>Teams with specialized roles and clear handoff processes</li>
+</ul>
+<div class="bg-accent-red/10 rounded-xl p-4">
+<h4 class="font-semibold text-accent-red mb-2">Common Pitfalls</h4>
+<ul class="space-y-1 text-sm">
+<li class="flex items-start"><i class="fas fa-exclamation-circle text-accent-red mr-2 mt-1"></i><span>Late discovery of issues can be costly and time-consuming to fix</span></li>
+<li class="flex items-start"><i class="fas fa-exclamation-circle text-accent-red mr-2 mt-1"></i><span>Difficulty accommodating changes once a phase is complete</span></li>
+<li class="flex items-start"><i class="fas fa-exclamation-circle text-accent-red mr-2 mt-1"></i><span>Client doesn't see working product until late in the process</span></li>
+</ul>
+</div>
+</div>
+<div>
+<h3 class="text-lg font-semibold text-dark mb-3">Waterfall Process</h3>
+<div class="timeline-container pb-4">
+<div class="timeline-item"><div class="timeline-dot"></div><div class="bg-white rounded-xl shadow-sharp p-4 border-l-2 border-brand-600"><h4 class="font-semibold">1. Requirements Gathering</h4><p class="text-sm text-dark/80 mb-2">Collect and document all project requirements from stakeholders.</p><div class="text-xs bg-light rounded-lg p-2"><span class="font-semibold">Key Deliverables:</span> Requirements Document, Statement of Work (SOW), Project Charter</div></div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="bg-white rounded-xl shadow-sharp p-4 border-l-2 border-brand-600"><h4 class="font-semibold">2. Design</h4><p class="text-sm text-dark/80 mb-2">Create detailed technical and visual specifications based on requirements.</p><div class="text-xs bg-light rounded-lg p-2"><span class="font-semibold">Key Deliverables:</span> Wireframes, Mockups, Technical Specifications, Information Architecture</div></div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="bg-white rounded-xl shadow-sharp p-4 border-l-2 border-brand-600"><h4 class="font-semibold">3. Implementation</h4><p class="text-sm text-dark/80 mb-2">Develop the product according to the design specifications.</p><div class="text-xs bg-light rounded-lg p-2"><span class="font-semibold">Key Deliverables:</span> Code, Content, Assets, Development Documentation</div></div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="bg-white rounded-xl shadow-sharp p-4 border-l-2 border-brand-600"><h4 class="font-semibold">4. Testing</h4><p class="text-sm text-dark/80 mb-2">Verify that the product meets all requirements and quality standards.</p><div class="text-xs bg-light rounded-lg p-2"><span class="font-semibold">Key Deliverables:</span> Test Plans, QA Reports, Bug Tracking, UAT Documentation</div></div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="bg-white rounded-xl shadow-sharp p-4 border-l-2 border-brand-600"><h4 class="font-semibold">5. Deployment</h4><p class="text-sm text-dark/80 mb-2">Release the product to the production environment.</p><div class="text-xs bg-light rounded-lg p-2"><span class="font-semibold">Key Deliverables:</span> Deployment Plan, Release Notes, Training Materials</div></div></div>
+<div class="timeline-item"><div class="timeline-dot"></div><div class="bg-white rounded-xl shadow-sharp p-4 border-l-2 border-brand-600"><h4 class="font-semibold">6. Maintenance</h4><p class="text-sm text-dark/80 mb-2">Provide ongoing support and implement necessary updates.</p><div class="text-xs bg-light rounded-lg p-2"><span class="font-semibold">Key Deliverables:</span> Support Plan, Maintenance Schedule, Documentation Updates</div></div></div>
+</div>
+<div class="bg-accent-green/10 rounded-xl p-4 mt-6">
+<h4 class="font-semibold text-accent-green mb-2">PM Pro Tips</h4>
+<ul class="space-y-2 text-sm">
+<li class="flex items-start"><i class="fas fa-lightbulb text-accent-green mr-2 mt-1"></i><span>Build in review gates between phases with clear approval criteria</span></li>
+<li class="flex items-start"><i class="fas fa-lightbulb text-accent-green mr-2 mt-1"></i><span>Create a change management process for handling inevitable requirement changes</span></li>
+<li class="flex items-start"><i class="fas fa-lightbulb text-accent-green mr-2 mt-1"></i><span>Consider breaking large projects into smaller waterfall cycles to reduce risk</span></li>
+</ul>
+</div>
+</div>
+</div>
+<div class="mt-8 border-t border-light pt-6">
+<h3 class="text-lg font-semibold text-dark mb-4">Essential Waterfall Templates (Links may be broken)</h3>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<a class="block bg-light rounded-xl p-4 hover:bg-light/70 transition-colors" href="https://docs.google.com/document/d/1Wy5UQVG7mprTQKZ-N-H-6_Uq_7KYK9mW_3_YJZl-4Ug/copy" rel="noopener noreferrer" target="_blank"><div class="flex items-center mb-2"><i class="fas fa-file-alt text-brand-600 mr-2"></i><h4 class="font-medium">Project Charter Template</h4></div><p class="text-xs text-dark/70">Define project purpose, scope, objectives, and key stakeholders.</p></a>
+<a class="block bg-light rounded-xl p-4 hover:bg-light/70 transition-colors" href="https://docs.google.com/spreadsheets/d/1-9F9XnM-TrPsP-UtOzNsw-LkKvTVVpVpXGQzQvk8KZU/copy" rel="noopener noreferrer" target="_blank"><div class="flex items-center mb-2"><i class="fas fa-tasks text-brand-600 mr-2"></i><h4 class="font-medium">Gantt Chart Template</h4></div><p class="text-xs text-dark/70">Visualize project timeline, dependencies, and critical path.</p></a>
+<a class="block bg-light rounded-xl p-4 hover:bg-light/70 transition-colors" href="https://docs.google.com/spreadsheets/d/1qr7vvSdwbBdIuZRvz3Zz-3ITQpTHq4PRR_xd0xFtpKk/copy" rel="noopener noreferrer" target="_blank"><div class="flex items-center mb-2"><i class="fas fa-exclamation-triangle text-brand-600 mr-2"></i><h4 class="font-medium">Risk Register Template</h4></div><p class="text-xs text-dark/70">Identify, assess, and plan mitigation strategies for project risks.</p></a>
+</div>
+</div>
+</div>
+</details>
+</div>
+<!-- Agile Methodology -->
+<div class="scroll-mt-20 mb-8" id="agile">
+<details class="bg-white rounded-xl shadow-sharp overflow-hidden border-l-4 border-accent-green">
+<summary class="p-6 cursor-pointer font-semibold text-xl text-dark hover:bg-light/50 flex justify-between items-center transition-colors duration-200">
+<span class="flex items-center"><span class="inline-block w-10 h-10 rounded-full bg-accent-green/10 mr-3 flex items-center justify-center"><i class="fas fa-sync-alt text-accent-green"></i></span>Agile Methodology</span><i class="fas fa-chevron-down"></i>
+</summary>
+<div class="p-6 border-t border-light">
+<div class="grid md:grid-cols-2 gap-8">
+<div>
+<h3 class="text-lg font-semibold text-dark mb-3">Overview</h3>
+<p class="mb-4 text-dark/80">Agile is an iterative approach that delivers work in small, consumable increments. It embraces changing requirements, encourages customer feedback, and focuses on continuous improvement.</p>
+<div class="flex items-center justify-between mb-6 bg-light rounded-xl p-4">
+<div class="text-center px-2"><div class="text-brand-600 font-semibold">Predictability</div><div class="mt-2 w-full bg-gray-200 rounded-full h-2"><div class="bg-brand-600 h-2 rounded-full" style="width: 50%"></div></div></div>
+<div class="text-center px-2"><div class="text-accent-red font-semibold">Flexibility</div><div class="mt-2 w-full bg-gray-200 rounded-full h-2"><div class="bg-accent-red h-2 rounded-full" style="width: 95%"></div></div></div>
+<div class="text-center px-2"><div class="text-accent-green font-semibold">Collaboration</div><div class="mt-2 w-full bg-gray-200 rounded-full h-2"><div class="bg-accent-green h-2 rounded-full" style="width: 90%"></div></div></div>
+</div>
+<h3 class="text-lg font-semibold text-dark mb-3">Best For</h3>
+<ul class="space-y-2 mb-6">
+<li class="flex items-center"><i class="fas fa-check-circle text-accent-green mr-2"></i>Projects with evolving or unclear requirements</li>
+<li class="flex items-center"><i class="fas fa-check-circle text-accent-green mr-2"></i>Products needing frequent user feedback</li>
+<li class="flex items-center"><i class="fas fa-check-circle text-accent-green mr-2"></i>Teams that can work collaboratively and self-organize</li>
+<li class="flex items-center"><i class="fas fa-check-circle text-accent-green mr-2"></i>Projects where time-to-market is critical</li>
+</ul>
+<div class="bg-accent-red/10 rounded-xl p-4">
+<h4 class="font-semibold text-accent-red mb-2">Common Pitfalls</h4>
+<ul class="space-y-1 text-sm">
+<li class="flex items-start"><i class="fas fa-exclamation-circle text-accent-red mr-2 mt-1"></i><span>Scope creep if backlog isn't properly managed</span></li>
+<li class="flex items-start"><i class="fas fa-exclamation-circle text-accent-red mr-2 mt-1"></i><span>Difficulty estimating overall project timeline and budget</span></li>
+<li class="flex items-start"><i class="fas fa-exclamation-circle text-accent-red mr-2 mt-1"></i><span>Reduced documentation can create knowledge gaps</span></li>
+</ul>
+</div>
+</div>
+<div>
+<h3 class="text-lg font-semibold text-dark mb-3">Agile Frameworks</h3>
+<div class="space-y-4">
+<div class="bg-white rounded-xl shadow-sharp p-4 border-l-2 border-accent-green"><h4 class="font-semibold text-accent-green">Scrum</h4><p class="text-sm text-dark/80 mb-2">A framework that uses fixed-length iterations (Sprints) with defined roles and ceremonies.</p><div class="grid grid-cols-2 gap-2 text-xs"><div class="bg-light rounded-lg p-2"><span class="font-semibold">Key Roles:</span> Scrum Master, Product Owner, Development Team</div><div class="bg-light rounded-lg p-2"><span class="font-semibold">Ceremonies:</span> Sprint Planning, Daily Standup, Sprint Review, Retrospective</div></div></div>
+<div class="bg-white rounded-xl shadow-sharp p-4 border-l-2 border-accent-green"><h4 class="font-semibold text-accent-green">Kanban</h4><p class="text-sm text-dark/80 mb-2">A visual workflow management method focused on limiting work in progress and maximizing flow.</p><div class="grid grid-cols-2 gap-2 text-xs"><div class="bg-light rounded-lg p-2"><span class="font-semibold">Key Principles:</span> Visualize Work, Limit WIP, Manage Flow</div><div class="bg-light rounded-lg p-2"><span class="font-semibold">Metrics:</span> Cycle Time, Throughput, Cumulative Flow</div></div></div>
+<div class="bg-white rounded-xl shadow-sharp p-4 border-l-2 border-accent-green"><h4 class="font-semibold text-accent-green">Lean</h4><p class="text-sm text-dark/80 mb-2">Focuses on delivering maximum value while minimizing waste in the development process.</p><div class="grid grid-cols-2 gap-2 text-xs"><div class="bg-light rounded-lg p-2"><span class="font-semibold">Key Principles:</span> Eliminate Waste, Amplify Learning, Decide Late</div><div class="bg-light rounded-lg p-2"><span class="font-semibold">Tools:</span> Value Stream Mapping, A3 Problem Solving</div></div></div>
+</div>
+<h3 class="text-lg font-semibold text-dark mt-6 mb-3">Scrum Sprint Cycle</h3>
+<div class="relative h-64 w-full"><canvas id="scrumCycle"></canvas></div>
+<div class="bg-accent-green/10 rounded-xl p-4 mt-6">
+<h4 class="font-semibold text-accent-green mb-2">PM Pro Tips</h4>
+<ul class="space-y-2 text-sm">
+<li class="flex items-start"><i class="fas fa-lightbulb text-accent-green mr-2 mt-1"></i><span>Invest time in proper backlog refinement to ensure stories are ready for sprints</span></li>
+<li class="flex items-start"><i class="fas fa-lightbulb text-accent-green mr-2 mt-1"></i><span>Use "Definition of Ready" and "Definition of Done" to maintain quality</span></li>
+<li class="flex items-start"><i class="fas fa-lightbulb text-accent-green mr-2 mt-1"></i><span>Keep ceremonies focused and timeboxed to prevent meeting fatigue</span></li>
+</ul>
+</div>
+</div>
+</div>
+<div class="mt-8 border-t border-light pt-6">
+<h3 class="text-lg font-semibold text-dark mb-4">Essential Agile Templates (Links may be broken)</h3>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<a class="block bg-light rounded-xl p-4 hover:bg-light/70 transition-colors" href="https://docs.google.com/spreadsheets/d/1Xn_YOHSYb2Qst5XBcSdBrVdj7BbANWU9opAur0gHHoE/copy" rel="noopener noreferrer" target="_blank"><div class="flex items-center mb-2"><i class="fas fa-list-alt text-accent-green mr-2"></i><h4 class="font-medium">User Story Template</h4></div><p class="text-xs text-dark/70">Structure user stories with acceptance criteria and value statements.</p></a>
+<a class="block bg-light rounded-xl p-4 hover:bg-light/70 transition-colors" href="https://docs.google.com/spreadsheets/d/1Wy_oVTRiGQnYawkLxk8BK6wlHqQw5PUn1Pgx7DvyDgI/copy" rel="noopener noreferrer" target="_blank"><div class="flex items-center mb-2"><i class="fas fa-chart-line text-accent-green mr-2"></i><h4 class="font-medium">Sprint Burndown Chart</h4></div><p class="text-xs text-dark/70">Track progress within a sprint to visualize work completion rate.</p></a>
+<a class="block bg-light rounded-xl p-4 hover:bg-light/70 transition-colors" href="https://docs.google.com/document/d/1Wy5UQVG7mprTQKZ-N-H-6_Uq_7KYK9mW_3_YJZl-4Ug/copy" rel="noopener noreferrer" target="_blank"><div class="flex items-center mb-2"><i class="fas fa-clipboard-check text-accent-green mr-2"></i><h4 class="font-medium">Retrospective Framework</h4></div><p class="text-xs text-dark/70">Structured approach for team reflection and continuous improvement.</p></a>
+</div>
+</div>
+</div>
+</details>
+</div>
+<!-- Hybrid Methodology -->
+<div class="scroll-mt-20 mb-8" id="hybrid">
+<details class="bg-white rounded-xl shadow-sharp overflow-hidden border-l-4 border-accent-yellow">
+<summary class="p-6 cursor-pointer font-semibold text-xl text-dark hover:bg-light/50 flex justify-between items-center transition-colors duration-200">
+<span class="flex items-center"><span class="inline-block w-10 h-10 rounded-full bg-accent-yellow/10 mr-3 flex items-center justify-center"><i class="fas fa-code-branch text-accent-yellow"></i></span>Hybrid Methodology</span><i class="fas fa-chevron-down"></i>
+</summary>
+<div class="p-6 border-t border-light">
+<div class="grid md:grid-cols-2 gap-8">
+<div>
+<h3 class="text-lg font-semibold text-dark mb-3">Overview</h3>
+<p class="mb-4 text-dark/80">Hybrid methodologies combine elements of Waterfall and Agile to leverage the strengths of both approaches. This pragmatic approach is increasingly common in digital projects.</p>
+<div class="flex items-center justify-between mb-6 bg-light rounded-xl p-4">
+<div class="text-center px-2"><div class="text-brand-600 font-semibold">Predictability</div><div class="mt-2 w-full bg-gray-200 rounded-full h-2"><div class="bg-brand-600 h-2 rounded-full" style="width: 75%"></div></div></div>
+<div class="text-center px-2"><div class="text-accent-red font-semibold">Flexibility</div><div class="mt-2 w-full bg-gray-200 rounded-full h-2"><div class="bg-accent-red h-2 rounded-full" style="width: 70%"></div></div></div>
+<div class="text-center px-2"><div class="text-accent-green font-semibold">Balance</div><div class="mt-2 w-full bg-gray-200 rounded-full h-2"><div class="bg-accent-green h-2 rounded-full" style="width: 85%"></div></div></div>
+</div>
+<h3 class="text-lg font-semibold text-dark mb-3">Best For</h3>
+<ul class="space-y-2 mb-6">
+<li class="flex items-center"><i class="fas fa-check-circle text-accent-green mr-2"></i>Organizations transitioning from Waterfall to Agile</li>
+<li class="flex items-center"><i class="fas fa-check-circle text-accent-green mr-2"></i>Projects with mixed requirements (some stable, some evolving)</li>
+<li class="flex items-center"><i class="fas fa-check-circle text-accent-green mr-2"></i>Teams with varying levels of Agile experience</li>
+<li class="flex items-center"><i class="fas fa-check-circle text-accent-green mr-2"></i>Projects requiring both upfront planning and iterative delivery</li>
+</ul>
+<div class="bg-accent-yellow/10 rounded-xl p-4">
+<h4 class="font-semibold text-dark mb-2">Common Hybrid Approaches</h4>
+<ul class="space-y-3 text-sm">
+<li class="flex items-start"><i class="fas fa-puzzle-piece text-accent-yellow mr-2 mt-1"></i><div><span class="font-medium">Waterfall Planning, Agile Execution</span><p class="text-dark/80 text-xs mt-1">Use Waterfall for initial planning and design, then switch to Agile sprints for development and testing.</p></div></li>
+<li class="flex items-start"><i class="fas fa-puzzle-piece text-accent-yellow mr-2 mt-1"></i><div><span class="font-medium">Phase-Based Hybrid</span><p class="text-dark/80 text-xs mt-1">Apply different methodologies to different project phases based on their characteristics.</p></div></li>
+<li class="flex items-start"><i class="fas fa-puzzle-piece text-accent-yellow mr-2 mt-1"></i><div><span class="font-medium">Agile Within Waterfall Framework</span><p class="text-dark/80 text-xs mt-1">Maintain a Waterfall project structure but use Agile techniques within development phases.</p></div></li>
+</ul>
+</div>
+</div>
+<div>
+<h3 class="text-lg font-semibold text-dark mb-3">Creating Your Hybrid Approach</h3>
+<div class="bg-white rounded-xl shadow-sharp p-5 border-l-2 border-accent-yellow">
+<h4 class="font-semibold mb-3">Step-by-Step Framework</h4>
+<ol class="space-y-4 text-sm">
+<li class="flex"><div class="flex-shrink-0 w-6 h-6 rounded-full bg-accent-yellow/20 flex items-center justify-center mr-3 mt-0.5"><span class="text-accent-yellow font-semibold">1</span></div><div><h5 class="font-medium">Assess Project Characteristics</h5><p class="text-dark/80 text-xs mt-1">Evaluate requirements stability, timeline constraints, team experience, and stakeholder expectations.</p></div></li>
+<li class="flex"><div class="flex-shrink-0 w-6 h-6 rounded-full bg-accent-yellow/20 flex items-center justify-center mr-3 mt-0.5"><span class="text-accent-yellow font-semibold">2</span></div><div><h5 class="font-medium">Select Waterfall Elements</h5><p class="text-dark/80 text-xs mt-1">Choose which aspects benefit from structure (e.g., requirements documentation, overall project planning, governance).</p></div></li>
+<li class="flex"><div class="flex-shrink-0 w-6 h-6 rounded-full bg-accent-yellow/20 flex items-center justify-center mr-3 mt-0.5"><span class="text-accent-yellow font-semibold">3</span></div><div><h5 class="font-medium">Select Agile Elements</h5><p class="text-dark/80 text-xs mt-1">Identify where flexibility is needed (e.g., development iterations, feedback loops, team collaboration).</p></div></li>
+<li class="flex"><div class="flex-shrink-0 w-6 h-6 rounded-full bg-accent-yellow/20 flex items-center justify-center mr-3 mt-0.5"><span class="text-accent-yellow font-semibold">4</span></div><div><h5 class="font-medium">Define Integration Points</h5><p class="text-dark/80 text-xs mt-1">Establish clear transitions between methodologies and how artifacts will flow between approaches.</p></div></li>
+<li class="flex"><div class="flex-shrink-0 w-6 h-6 rounded-full bg-accent-yellow/20 flex items-center justify-center mr-3 mt-0.5"><span class="text-accent-yellow font-semibold">5</span></div><div><h5 class="font-medium">Create Custom Processes</h5><p class="text-dark/80 text-xs mt-1">Develop tailored workflows, ceremonies, and documentation that support your hybrid approach.</p></div></li>
+<li class="flex"><div class="flex-shrink-0 w-6 h-6 rounded-full bg-accent-yellow/20 flex items-center justify-center mr-3 mt-0.5"><span class="text-accent-yellow font-semibold">6</span></div><div><h5 class="font-medium">Communicate and Train</h5><p class="text-dark/80 text-xs mt-1">Ensure all stakeholders understand the hybrid approach and their roles within it.</p></div></li>
+</ol>
+</div>
+<div class="bg-accent-green/10 rounded-xl p-4 mt-6">
+<h4 class="font-semibold text-accent-green mb-2">PM Pro Tips</h4>
+<ul class="space-y-2 text-sm">
+<li class="flex items-start"><i class="fas fa-lightbulb text-accent-green mr-2 mt-1"></i><span>Be explicit about which methodology is being used at each stage</span></li>
+<li class="flex items-start"><i class="fas fa-lightbulb text-accent-green mr-2 mt-1"></i><span>Create a visual project map showing the hybrid workflow for stakeholders</span></li>
+<li class="flex items-start"><i class="fas fa-lightbulb text-accent-green mr-2 mt-1"></i><span>Regularly evaluate if the hybrid approach is working and be willing to adjust</span></li>
+</ul>
+</div>
+<div class="mt-6">
+<h4 class="font-semibold text-dark mb-3">Sample Hybrid Timeline</h4>
+<div class="relative h-20 bg-light rounded-xl overflow-hidden flex">
+<div class="w-1/4 bg-brand-600 flex items-center justify-center text-white text-xs font-medium text-center px-1">Planning<br/>(Waterfall)</div>
+<div class="w-1/4 bg-accent-green flex items-center justify-center text-white text-xs font-medium text-center px-1">Design<br/>(Hybrid)</div>
+<div class="w-1/3 bg-accent-yellow flex items-center justify-center text-white text-xs font-medium text-center px-1">Development<br/>(Agile Sprints)</div>
+<div class="flex-1 bg-accent-red flex items-center justify-center text-white text-xs font-medium text-center px-1">Launch<br/>(Waterfall)</div>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-8 border-t border-light pt-6">
+<h3 class="text-lg font-semibold text-dark mb-4">Hybrid Approach Templates (Links may be broken)</h3>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<a class="block bg-light rounded-xl p-4 hover:bg-light/70 transition-colors" href="https://docs.google.com/document/d/1Wy5UQVG7mprTQKZ-N-H-6_Uq_7KYK9mW_3_YJZl-4Ug/copy" rel="noopener noreferrer" target="_blank"><div class="flex items-center mb-2"><i class="fas fa-sitemap text-accent-yellow mr-2"></i><h4 class="font-medium">Hybrid Project Plan</h4></div><p class="text-xs text-dark/70">Combine waterfall phases with agile iterations in a unified project plan.</p></a>
+<a class="block bg-light rounded-xl p-4 hover:bg-light/70 transition-colors" href="https://docs.google.com/spreadsheets/d/1Wy_oVTRiGQnYawkLxk8BK6wlHqQw5PUn1Pgx7DvyDgI/copy" rel="noopener noreferrer" target="_blank"><div class="flex items-center mb-2"><i class="fas fa-project-diagram text-accent-yellow mr-2"></i><h4 class="font-medium">Methodology Selection Matrix</h4></div><p class="text-xs text-dark/70">Decision framework for choosing the right approach for each project phase.</p></a>
+<a class="block bg-light rounded-xl p-4 hover:bg-light/70 transition-colors" href="https://docs.google.com/document/d/1Wy5UQVG7mprTQKZ-N-H-6_Uq_7KYK9mW_3_YJZl-4Ug/copy" rel="noopener noreferrer" target="_blank"><div class="flex items-center mb-2"><i class="fas fa-random text-accent-yellow mr-2"></i><h4 class="font-medium">Phase Transition Checklist</h4></div><p class="text-xs text-dark/70">Ensure smooth transitions between waterfall and agile phases.</p></a>
+</div>
+</div>
+</div>
+</details>
+</div>
+</section>
+<!-- Essential PM Skills -->
+<section class="scroll-mt-20" id="skills">
+<div class="bg-white rounded-xl shadow-sharp overflow-hidden border-l-4 border-accent-red">
+<div class="p-6 md:p-8">
+<h2 class="text-2xl md:text-3xl font-display font-bold text-dark mb-6 flex items-center"><span class="inline-block w-10 h-10 rounded-full bg-accent-red/10 mr-3 flex items-center justify-center"><i class="fas fa-cogs text-accent-red"></i></span>Essential PM Skills &amp; Tools</h2>
+<div class="grid md:grid-cols-2 gap-8">
+<div>
+<h3 class="text-lg font-semibold text-dark mb-4">Core Competencies</h3>
+<div class="space-y-5">
+<div class="bg-white rounded-xl shadow-sharp p-4 border-l-2 border-accent-red"><h4 class="font-semibold text-accent-red mb-2">Communication</h4><p class="text-sm text-dark/80 mb-3">The ability to clearly articulate project goals, status, risks, and decisions to team members and stakeholders.</p><div class="bg-light rounded-lg p-3"><h5 class="text-xs font-semibold mb-2">Practical Application:</h5><ul class="text-xs space-y-1"><li class="flex items-start"><i class="fas fa-angle-right text-accent-red mr-1 mt-0.5"></i><span>Create a communication plan identifying key stakeholders, frequency, and format</span></li><li class="flex items-start"><i class="fas fa-angle-right text-accent-red mr-1 mt-0.5"></i><span>Tailor communication style to the audience (technical vs. executive)</span></li><li class="flex items-start"><i class="fas fa-angle-right text-accent-red mr-1 mt-0.5"></i><span>Use visual aids (dashboards, charts) to simplify complex information</span></li></ul></div></div>
+<div class="bg-white rounded-xl shadow-sharp p-4 border-l-2 border-accent-red"><h4 class="font-semibold text-accent-red mb-2">Risk Management</h4><p class="text-sm text-dark/80 mb-3">The process of identifying potential problems, assessing their impact, and planning mitigation strategies.</p><div class="bg-light rounded-lg p-3"><h5 class="text-xs font-semibold mb-2">Practical Application:</h5><ul class="text-xs space-y-1"><li class="flex items-start"><i class="fas fa-angle-right text-accent-red mr-1 mt-0.5"></i><span>Maintain a Risk Register with probability, impact, and mitigation plans</span></li><li class="flex items-start"><i class="fas fa-angle-right text-accent-red mr-1 mt-0.5"></i><span>Schedule regular risk review sessions with the team</span></li><li class="flex items-start"><i class="fas fa-angle-right text-accent-red mr-1 mt-0.5"></i><span>Convert identified risks into actionable tasks when appropriate</span></li></ul></div></div>
+<div class="bg-white rounded-xl shadow-sharp p-4 border-l-2 border-accent-red"><h4 class="font-semibold text-accent-red mb-2">Scope Management</h4><p class="text-sm text-dark/80 mb-3">The ability to define what is and isn't included in the project and manage changes effectively.</p><div class="bg-light rounded-lg p-3"><h5 class="text-xs font-semibold mb-2">Practical Application:</h5><ul class="text-xs space-y-1"><li class="flex items-start"><i class="fas fa-angle-right text-accent-red mr-1 mt-0.5"></i><span>Create a clear Statement of Work (SOW) or Product Backlog</span></li><li class="flex items-start"><i class="fas fa-angle-right text-accent-red mr-1 mt-0.5"></i><span>Implement a formal change request process with impact assessment</span></li><li class="flex items-start"><i class="fas fa-angle-right text-accent-red mr-1 mt-0.5"></i><span>Regularly review scope against project objectives and constraints</span></li></ul></div></div>
+</div>
+</div>
+<div>
+<h3 class="text-lg font-semibold text-dark mb-4">Essential Tools &amp; Templates (Links may be broken)</h3>
+<div class="grid grid-cols-2 gap-4 mb-6">
+<a class="bg-white rounded-xl shadow-sharp p-4 card-hover" href="https://docs.google.com/document/d/1Wy5UQVG7mprTQKZ-N-H-6_Uq_7KYK9mW_3_YJZl-4Ug/copy" rel="noopener noreferrer" target="_blank"><div class="flex items-center mb-2"><i class="fas fa-tasks text-brand-600 mr-2"></i><h4 class="font-medium">Project Plan</h4></div><p class="text-xs text-dark/70">Comprehensive document outlining scope, timeline, resources, and approach.</p><div class="mt-2 text-xs text-brand-600">Download Template</div></a>
+<a class="bg-white rounded-xl shadow-sharp p-4 card-hover" href="https://trello.com/templates/project-management/project-management-template-LGHXvZzJ" rel="noopener noreferrer" target="_blank"><div class="flex items-center mb-2"><i class="fas fa-columns text-accent-green mr-2"></i><h4 class="font-medium">Kanban Board</h4></div><p class="text-xs text-dark/70">Visual workflow management tool to track task progress.</p><div class="mt-2 text-xs text-accent-green">Trello Template</div></a>
+<a class="bg-white rounded-xl shadow-sharp p-4 card-hover" href="https://docs.google.com/spreadsheets/d/1qr7vvSdwbBdIuZRvz3Zz-3ITQpTHq4PRR_xd0xFtpKk/copy" rel="noopener noreferrer" target="_blank"><div class="flex items-center mb-2"><i class="fas fa-exclamation-triangle text-accent-red mr-2"></i><h4 class="font-medium">Risk Register</h4></div><p class="text-xs text-dark/70">Document for identifying, assessing, and tracking project risks.</p><div class="mt-2 text-xs text-accent-red">Download Template</div></a>
+<a class="bg-white rounded-xl shadow-sharp p-4 card-hover" href="https://docs.google.com/spreadsheets/d/1-9F9XnM-TrPsP-UtOzNsw-LkKvTVVpVpXGQzQvk8KZU/copy" rel="noopener noreferrer" target="_blank"><div class="flex items-center mb-2"><i class="fas fa-users-cog text-accent-yellow mr-2"></i><h4 class="font-medium">RACI Matrix</h4></div><p class="text-xs text-dark/70">Chart defining roles and responsibilities for project tasks.</p><div class="mt-2 text-xs text-accent-yellow">Download Template</div></a>
+</div>
+<h3 class="text-lg font-semibold text-dark mb-4">Learning Resources</h3>
+<div class="space-y-3">
+<a class="flex items-start hover:bg-light rounded-lg p-2 transition-colors" href="https://www.pmi.org/learning/library" rel="noopener noreferrer" target="_blank"><div class="mt-1 mr-3 w-8 h-8 rounded-full bg-brand-600/10 flex items-center justify-center flex-shrink-0"><i class="fas fa-book text-brand-600 text-sm"></i></div><div><h4 class="font-medium">PMI Learning Library</h4><p class="text-sm text-dark/80">Free articles and resources from the Project Management Institute.</p></div></a>
+<a class="flex items-start hover:bg-light rounded-lg p-2 transition-colors" href="https://www.atlassian.com/agile" rel="noopener noreferrer" target="_blank"><div class="mt-1 mr-3 w-8 h-8 rounded-full bg-brand-600/10 flex items-center justify-center flex-shrink-0"><i class="fas fa-sync-alt text-brand-600 text-sm"></i></div><div><h4 class="font-medium">Atlassian Agile Coach</h4><p class="text-sm text-dark/80">Comprehensive guide to agile methodologies and practices.</p></div></a>
+<a class="flex items-start hover:bg-light rounded-lg p-2 transition-colors" href="https://www.digitalprojectmanager.com/" rel="noopener noreferrer" target="_blank"><div class="mt-1 mr-3 w-8 h-8 rounded-full bg-brand-600/10 flex items-center justify-center flex-shrink-0"><i class="fas fa-laptop text-brand-600 text-sm"></i></div><div><h4 class="font-medium">Digital Project Manager</h4><p class="text-sm text-dark/80">Resources specifically for digital project management.</p></div></a>
+</div>
+<div class="bg-accent-green/10 rounded-xl p-4 mt-6">
+<h4 class="font-semibold text-accent-green mb-2">Continuous Improvement</h4><p class="text-sm">The most effective PMs regularly reflect on their processes and seek to improve. Consider:</p>
+<ul class="text-sm mt-2 space-y-1">
+<li class="flex items-start"><i class="fas fa-check-circle text-accent-green mr-2 mt-0.5"></i><span>Conducting personal retrospectives after each project</span></li>
+<li class="flex items-start"><i class="fas fa-check-circle text-accent-green mr-2 mt-0.5"></i><span>Seeking feedback from team members and stakeholders</span></li>
+<li class="flex items-start"><i class="fas fa-check-circle text-accent-green mr-2 mt-0.5"></i><span>Staying current with industry trends and methodologies</span></li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Checklist Generator -->
+<section class="scroll-mt-20 mt-12" id="generator">
+<div class="bg-white rounded-xl shadow-sharp overflow-hidden border-l-4 border-brand-600">
+<div class="p-6 md:p-8">
+<h2 class="text-2xl md:text-3xl font-display font-bold text-dark mb-6 flex items-center"><span class="inline-block w-10 h-10 rounded-full bg-brand-600/10 mr-3 flex items-center justify-center"><i class="fas fa-list-check text-brand-600"></i></span>Project Checklist Generator</h2>
+<p class="text-lg text-dark/80 mb-6">Select your project methodology to generate a standard checklist.</p>
+<div class="grid md:grid-cols-3 gap-6 mb-8">
+<div class="bg-light rounded-xl p-5">
+<h3 class="text-lg font-semibold text-dark mb-4">Project Details</h3>
+<div class="space-y-4">
+<div><label class="block text-sm font-medium text-dark mb-1" for="projectType">Project Type:</label><input class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-300 focus:border-brand-500 transition-all" id="projectType" placeholder="e.g., Website Redesign" type="text"/></div>
+<div><label class="block text-sm font-medium text-dark mb-1" for="methodologyGen">Methodology:</label><select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-300 focus:border-brand-500 transition-all" id="methodologyGen"><option value="Waterfall">Waterfall</option><option value="Agile">Agile</option><option value="Hybrid">Hybrid (Agile/Waterfall)</option></select></div>
+<div><label class="block text-sm font-medium text-dark mb-1" for="projectSize">Project Size:</label><select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-300 focus:border-brand-500 transition-all" id="projectSize"><option value="Small">Small (1-3 months)</option><option selected="" value="Medium">Medium (3-6 months)</option><option value="Large">Large (6+ months)</option></select></div>
+<div><label class="block text-sm font-medium text-dark mb-1" for="teamSize">Team Size:</label><select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-300 focus:border-brand-500 transition-all" id="teamSize"><option value="Small">Small (2-5 people)</option><option selected="" value="Medium">Medium (6-10 people)</option><option value="Large">Large (11+ people)</option></select></div>
+</div>
+</div>
+<div class="bg-light rounded-xl p-5">
+<h3 class="text-lg font-semibold text-dark mb-4">Optional Details (For Info)</h3>
+<div class="space-y-4">
+<div>
+<label class="block text-sm font-medium text-dark mb-2">Project Phase Focus:</label>
+<div class="space-y-2">
+<label class="flex items-center"><input checked="" class="custom-checkbox" name="projectPhase" type="checkbox" value="Initiation"/><span class="ml-2 text-sm">Initiation &amp; Planning</span></label>
+<label class="flex items-center"><input checked="" class="custom-checkbox" name="projectPhase" type="checkbox" value="Execution"/><span class="ml-2 text-sm">Execution &amp; Monitoring</span></label>
+<label class="flex items-center"><input checked="" class="custom-checkbox" name="projectPhase" type="checkbox" value="Closure"/><span class="ml-2 text-sm">Closure &amp; Evaluation</span></label>
+</div>
+</div>
+<div>
+<label class="block text-sm font-medium text-dark mb-2">Special Considerations:</label>
+<div class="space-y-2">
+<label class="flex items-center"><input class="custom-checkbox" name="considerations" type="checkbox" value="Stakeholders"/><span class="ml-2 text-sm">Multiple Stakeholders</span></label>
+<label class="flex items-center"><input class="custom-checkbox" name="considerations" type="checkbox" value="Remote"/><span class="ml-2 text-sm">Remote/Distributed Team</span></label>
+<label class="flex items-center"><input class="custom-checkbox" name="considerations" type="checkbox" value="Compliance"/><span class="ml-2 text-sm">Compliance Requirements</span></label>
+<label class="flex items-center"><input class="custom-checkbox" name="considerations" type="checkbox" value="Integration"/><span class="ml-2 text-sm">System Integrations</span></label>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-light rounded-xl p-5 flex flex-col">
+<h3 class="text-lg font-semibold text-dark mb-4">Generate Checklist</h3>
+<p class="text-sm text-dark/80 mb-6">Select your methodology above and click below to generate a standard checklist.</p>
+<div class="mt-auto">
+<button class="w-full bg-brand-600 hover:bg-brand-700 text-white font-medium py-3 px-6 rounded-lg transition duration-150 ease-in-out flex items-center justify-center" id="generateChecklistBtn">
+                                        Generate Checklist
+                                        <!-- Removed loading spinner -->
+</button>
+<!-- Removed "Powered by AI" text -->
+</div>
+</div>
+</div>
+<div class="mt-8 p-6 bg-white rounded-xl border border-gray-200 shadow-sharp hidden" id="checklistResult">
+<div class="flex flex-wrap justify-between items-center mb-4 gap-2">
+<h3 class="text-xl font-semibold text-dark">Your Project Checklist</h3>
+<div class="flex-shrink-0">
+<button class="text-sm bg-dark hover:bg-dark/90 text-white font-medium py-2 px-4 rounded-lg transition duration-150 ease-in-out inline-flex items-center disabled:opacity-50 disabled:cursor-not-allowed" disabled="" id="downloadPdfBtn">
+<i class="fas fa-download mr-2"></i> Download PDF
+                                    </button>
+<button class="text-sm bg-light hover:bg-gray-200 text-dark font-medium py-2 px-4 rounded-lg transition duration-150 ease-in-out inline-flex items-center ml-2 disabled:opacity-50 disabled:cursor-not-allowed" disabled="" id="copyChecklistBtn">
+<i class="fas fa-copy mr-2"></i> Copy
+                                    </button>
+</div>
+</div>
+<div class="mb-4">
+<div class="flex flex-wrap justify-between text-sm text-dark/70 mb-1 gap-x-4">
+<span>Project: <span class="font-medium text-dark" id="resultProjectType">N/A</span></span>
+<span>Methodology: <span class="font-medium text-dark" id="resultMethodology">N/A</span></span>
+</div>
+<div class="progress-bar mt-1"><div class="progress-bar-fill bg-gradient-to-r from-brand-600 to-accent-green" style="width: 0%"></div></div>
+</div>
+<div class="space-y-6">
+<div class="space-y-2" id="initiationSection"><h4 class="font-semibold text-brand-600 flex items-center"><i class="fas fa-flag mr-2"></i> Initiation &amp; Planning</h4><ul class="space-y-2 text-sm" id="initiationChecklist"><li class="text-dark/60 italic">Generate checklist to see items...</li></ul></div>
+<div class="space-y-2" id="executionSection"><h4 class="font-semibold text-accent-green flex items-center"><i class="fas fa-tasks mr-2"></i> Execution &amp; Monitoring</h4><ul class="space-y-2 text-sm" id="executionChecklist"><li class="text-dark/60 italic">Generate checklist to see items...</li></ul></div>
+<div class="space-y-2" id="closureSection"><h4 class="font-semibold text-accent-red flex items-center"><i class="fas fa-check-circle mr-2"></i> Closure &amp; Evaluation</h4><ul class="space-y-2 text-sm" id="closureChecklist"><li class="text-dark/60 italic">Generate checklist to see items...</li></ul></div>
+</div>
+<div class="text-accent-red text-sm mt-4 hidden bg-red-100 p-3 rounded-lg" id="checklistError"></div>
+<div class="mt-6 pt-4 border-t border-light">
+<h4 class="font-semibold text-dark mb-2">Additional Resources</h4>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+<a class="text-sm text-brand-600 hover:text-brand-700 flex items-center" href="https://www.pmi.org/learning/library" rel="noopener noreferrer" target="_blank"><i class="fas fa-external-link-alt mr-1"></i> Project Management Templates</a>
+<a class="text-sm text-brand-600 hover:text-brand-700 flex items-center" href="https://www.digitalprojectmanager.com/" rel="noopener noreferrer" target="_blank"><i class="fas fa-external-link-alt mr-1"></i> Digital PM Best Practices</a>
+<a class="text-sm text-brand-600 hover:text-brand-700 flex items-center" href="https://www.capterra.com/project-management-software/" rel="noopener noreferrer" target="_blank"><i class="fas fa-external-link-alt mr-1"></i> PM Tool Recommendations</a>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<footer class="text-center mt-16 mb-8 text-dark/60 text-sm">
+<p>Project Planner: A modern toolkit for navigating digital project management.</p>
+<p class="mt-2">Designed for digital project managers everywhere.</p>
+</footer>
+</div>
+<script>
+        const { jsPDF } = window.jspdf; // Make jsPDF globally available
+
+        // --- Static Checklist Templates ---
+        const checklistTemplates = {
+            Waterfall: {
+                initiation: [
+                    "Define clear project objectives, scope, and deliverables.",
+                    "Create detailed Statement of Work (SOW) and Project Charter.",
+                    "Develop comprehensive Work Breakdown Structure (WBS).",
+                    "Establish project timeline with clear phase gates (Gantt Chart).",
+                    "Secure budget approval and allocate resources.",
+                    "Identify stakeholders and create communication plan.",
+                    "Conduct formal project kickoff meeting.",
+                    "Set up project repository and documentation standards."
+                ],
+                execution: [
+                    "Execute project tasks sequentially according to the plan.",
+                    "Monitor progress against baseline schedule and budget.",
+                    "Manage dependencies between tasks and phases.",
+                    "Conduct phase gate reviews and obtain sign-offs.",
+                    "Manage change requests through a formal control process.",
+                    "Track issues and risks; update logs regularly.",
+                    "Hold regular status meetings and report progress.",
+                    "Ensure adherence to quality standards throughout development."
+                ],
+                closure: [
+                    "Verify all requirements and deliverables have been met.",
+                    "Conduct final User Acceptance Testing (UAT) and get formal acceptance.",
+                    "Complete and archive all project documentation.",
+                    "Perform formal project handover to operations/client.",
+                    "Conduct post-project review (lessons learned).",
+                    "Release project resources.",
+                    "Finalize financial accounts and close contracts.",
+                    "Celebrate project completion with the team."
+                ]
+            },
+            Agile: {
+                initiation: [
+                    "Define high-level project vision and objectives.",
+                    "Create initial Product Backlog with prioritized features/user stories.",
+                    "Establish Definition of Ready (DoR) and Definition of Done (DoD).",
+                    "Identify Product Owner, Scrum Master (if Scrum), and Development Team.",
+                    "Select sprint length and plan initial sprint cadence.",
+                    "Set up Agile project management tools (Jira, Trello, etc.).",
+                    "Conduct project kickoff / Sprint 0 planning.",
+                    "Outline initial release plan or roadmap."
+                ],
+                execution: [
+                    "Conduct Sprint Planning meetings to select backlog items for the sprint.",
+                    "Hold Daily Stand-ups to synchronize team efforts.",
+                    "Facilitate development work within sprints.",
+                    "Refine the Product Backlog continuously.",
+                    "Conduct Sprint Reviews to demonstrate completed work to stakeholders.",
+                    "Hold Sprint Retrospectives to identify process improvements.",
+                    "Monitor sprint velocity and burndown charts.",
+                    "Adapt to changing requirements based on feedback."
+                ],
+                closure: [
+                    "Ensure final product increment meets DoD and stakeholder expectations.",
+                    "Conduct final product demonstration and review.",
+                    "Update and finalize all necessary documentation.",
+                    "Perform final release activities and deployment.",
+                    "Conduct overall project retrospective.",
+                    "Archive project artifacts and backlog.",
+                    "Transition product ownership/support if applicable.",
+                    "Celebrate team achievements and project success."
+                ]
+            },
+            Hybrid: {
+                initiation: [
+                    "Define overall project goals, scope boundaries, and key milestones (Waterfall element).",
+                    "Create high-level project plan and phase definitions.",
+                    "Develop initial Product Backlog or feature list (Agile element).",
+                    "Identify key stakeholders, roles (may mix Waterfall/Agile), and communication plan.",
+                    "Establish budget and resource plan (may be phase-based).",
+                    "Define transition points between Waterfall and Agile phases.",
+                    "Set up integrated project tracking tools.",
+                    "Conduct project kickoff outlining the hybrid approach."
+                ],
+                execution: [
+                    "Execute initial phases (e.g., requirements, high-level design) using Waterfall approach if applicable.",
+                    "Transition to Agile sprints/iterations for development/execution phases.",
+                    "Conduct Agile ceremonies (Planning, Standups, Reviews, Retros) during Agile phases.",
+                    "Manage dependencies between Waterfall and Agile components.",
+                    "Monitor progress using both milestone tracking and sprint metrics.",
+                    "Implement change management process suitable for the current phase.",
+                    "Maintain relevant documentation for both approaches.",
+                    "Report progress integrating both Waterfall and Agile status."
+                ],
+                closure: [
+                    "Integrate and test components developed via different approaches.",
+                    "Verify overall project deliverables meet initial goals and acceptance criteria.",
+                    "Conduct final UAT incorporating all project parts.",
+                    "Obtain formal sign-off for the entire project.",
+                    "Complete and archive documentation from all phases.",
+                    "Perform project handover considering ongoing support needs.",
+                    "Conduct comprehensive project retrospective covering the hybrid process.",
+                    "Finalize budget, contracts, and release resources."
+                ]
+            }
+        };
+
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // PM Triangle Visualization
+            const pmTriangleCtx = document.getElementById('pmTriangle')?.getContext('2d');
+            const triangleInfo = document.getElementById('triangleInfo');
+            const triangleInfoTitle = document.getElementById('triangleInfoTitle');
+            const triangleInfoText = document.getElementById('triangleInfoText');
+            const triangleInfoImpactText = document.getElementById('triangleInfoImpactText');
+
+            if (pmTriangleCtx && triangleInfo && triangleInfoTitle && triangleInfoText && triangleInfoImpactText) {
+                const originalTriangleDataValues = [90, 75, 80, 85, 70, 65]; // Scope, Time, Cost, Quality, Resources, Risk
+                const triangleData = {
+                    labels: ['Scope', 'Time', 'Cost', 'Quality', 'Resources', 'Risk'],
+                    datasets: [{
+                        label: 'Project Constraints', data: [...originalTriangleDataValues],
+                        backgroundColor: 'rgba(14, 165, 233, 0.2)', borderColor: 'rgba(14, 165, 233, 0.8)',
+                        pointBackgroundColor: 'rgba(14, 165, 233, 1)', pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff', pointHoverBorderColor: 'rgba(14, 165, 233, 1)',
+                        pointRadius: 6, pointHoverRadius: 8, pointHitRadius: 15
+                    }]
+                };
+                const trianglePointsInfo = {
+                    'Scope': { description: 'The features, functions, and work required...', impact: 'Increasing scope typically requires more time, cost...', affectedIndices: [1, 2, 4] },
+                    'Time': { description: 'The project schedule, deadlines, and overall duration.', impact: 'Compressing the timeline often requires more resources...', affectedIndices: [0, 2, 3, 4] },
+                    'Cost': { description: 'The budget allocated to the project...', impact: 'Reducing costs may necessitate reduced scope...', affectedIndices: [0, 1, 3, 4] },
+                    'Quality': { description: 'The standards, criteria, and fitness for purpose...', impact: 'Higher quality standards usually demand more time...', affectedIndices: [1, 2, 4] },
+                    'Resources': { description: 'The people, equipment, facilities, and materials...', impact: 'Fewer resources may extend the timeline...', affectedIndices: [0, 1, 2] },
+                    'Risk': { description: 'The potential for unplanned events...', impact: 'Higher risk projects often need more budget/time contingency...', affectedIndices: [1, 2] }
+                };
+                let activeTriangleIndex = -1;
+
+                const pmTriangleChart = new Chart(pmTriangleCtx, {
+                    type: 'radar', data: triangleData,
+                    options: {
+                        maintainAspectRatio: false,
+                        elements: { line: { borderWidth: 3 } },
+                        scales: { r: { angleLines: { display: true, color: 'rgba(0, 0, 0, 0.05)' }, suggestedMin: 0, suggestedMax: 100, grid: { color: 'rgba(0, 0, 0, 0.05)' }, pointLabels: { font: { size: 13, weight: '500', family: 'Inter' }, color: '#374151' }, ticks: { display: false } } },
+                        plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                        onClick: (e, elements) => {
+                            if (elements.length > 0) {
+                                const clickedIndex = elements[0].index;
+                                const label = triangleData.labels[clickedIndex];
+                                const info = trianglePointsInfo[label];
+                                triangleInfoTitle.textContent = label;
+                                triangleInfoText.textContent = info.description;
+                                triangleInfoImpactText.textContent = info.impact;
+                                triangleInfo.classList.remove('hidden');
+                                const currentData = [...originalTriangleDataValues];
+                                info.affectedIndices.forEach(idx => { currentData[idx] = Math.max(0, originalTriangleDataValues[idx] - 15); });
+                                currentData[clickedIndex] = 100;
+                                pmTriangleChart.data.datasets[0].data = currentData;
+                                pmTriangleChart.data.datasets[0].pointBackgroundColor = originalTriangleDataValues.map((_, i) => i === clickedIndex ? 'rgba(229, 62, 62, 1)' : 'rgba(14, 165, 233, 1)');
+                                pmTriangleChart.data.datasets[0].pointRadius = originalTriangleDataValues.map((_, i) => i === clickedIndex ? 8 : 6);
+                                pmTriangleChart.update();
+                                activeTriangleIndex = clickedIndex;
+                            } else if (activeTriangleIndex !== -1) {
+                                pmTriangleChart.data.datasets[0].data = [...originalTriangleDataValues];
+                                pmTriangleChart.data.datasets[0].pointBackgroundColor = 'rgba(14, 165, 233, 1)';
+                                pmTriangleChart.data.datasets[0].pointRadius = 6;
+                                pmTriangleChart.update();
+                                triangleInfo.classList.add('hidden');
+                                activeTriangleIndex = -1;
+                            }
+                        }
+                    }
+                });
+            } else { console.warn("PM Triangle elements not found."); }
+
+            // Scrum Sprint Cycle Visualization
+            const scrumCycleCtx = document.getElementById('scrumCycle')?.getContext('2d');
+            if (scrumCycleCtx) {
+                new Chart(scrumCycleCtx, {
+                    type: 'doughnut',
+                    data: { labels: ['Sprint Planning', 'Daily Standups', 'Development Work', 'Sprint Review', 'Sprint Retrospective'], datasets: [{ data: [10, 15, 55, 10, 10], backgroundColor: ['rgba(14, 165, 233, 0.8)', 'rgba(16, 185, 129, 0.8)', 'rgba(245, 158, 11, 0.8)', 'rgba(229, 62, 62, 0.8)', 'rgba(139, 92, 246, 0.8)'], borderColor: '#ffffff', borderWidth: 2 }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 12 }, color: '#374151' } }, title: { display: true, text: 'Typical Scrum Sprint Time Allocation', color: '#111827', font: { family: 'Inter', size: 14, weight: '600' } } } }
+                });
+            } else { console.warn("Canvas with id 'scrumCycle' not found."); }
+
+            // Checklist Generator Logic
+            const generateBtn = document.getElementById('generateChecklistBtn');
+            const projectTypeInput = document.getElementById('projectType');
+            const methodologySelect = document.getElementById('methodologyGen');
+            const checklistResultDiv = document.getElementById('checklistResult');
+            const initiationChecklistUl = document.getElementById('initiationChecklist');
+            const executionChecklistUl = document.getElementById('executionChecklist');
+            const closureChecklistUl = document.getElementById('closureChecklist');
+            const checklistErrorP = document.getElementById('checklistError');
+            const resultProjectType = document.getElementById('resultProjectType');
+            const resultMethodology = document.getElementById('resultMethodology');
+            const progressBarFill = document.querySelector('#checklistResult .progress-bar-fill');
+            const copyChecklistBtn = document.getElementById('copyChecklistBtn');
+            const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+
+            let generatedChecklistData = null; // Store generated data for PDF/Copy
+
+            function populateChecklistUI(data) {
+                initiationChecklistUl.innerHTML = '';
+                executionChecklistUl.innerHTML = '';
+                closureChecklistUl.innerHTML = '';
+                checklistErrorP.classList.add('hidden'); // Hide errors on success
+
+                const createListItem = (itemText) => {
+                    const li = document.createElement('li');
+                    li.className = 'flex items-start';
+                    li.innerHTML = `<label class="flex items-start cursor-pointer w-full"><input type="checkbox" class="custom-checkbox mt-0.5 mr-2"><span class="flex-1">${itemText}</span></label>`;
+                    return li;
+                };
+
+                if (data.initiation && data.initiation.length > 0) {
+                    data.initiation.forEach(item => initiationChecklistUl.appendChild(createListItem(item)));
+                } else {
+                    initiationChecklistUl.innerHTML = '<li class="text-dark/60 italic">No initiation items for this methodology.</li>';
+                }
+                if (data.execution && data.execution.length > 0) {
+                    data.execution.forEach(item => executionChecklistUl.appendChild(createListItem(item)));
+                } else {
+                    executionChecklistUl.innerHTML = '<li class="text-dark/60 italic">No execution items for this methodology.</li>';
+                }
+                 if (data.closure && data.closure.length > 0) {
+                    data.closure.forEach(item => closureChecklistUl.appendChild(createListItem(item)));
+                } else {
+                    closureChecklistUl.innerHTML = '<li class="text-dark/60 italic">No closure items for this methodology.</li>';
+                }
+
+
+                const allCheckboxes = checklistResultDiv.querySelectorAll('.custom-checkbox');
+                allCheckboxes.forEach(checkbox => checkbox.addEventListener('change', updateProgress));
+                updateProgress();
+
+                copyChecklistBtn.disabled = false;
+                downloadPdfBtn.disabled = false;
+            }
+
+            function updateProgress() {
+                const allCheckboxes = checklistResultDiv.querySelectorAll('.custom-checkbox');
+                const checkedCheckboxes = checklistResultDiv.querySelectorAll('.custom-checkbox:checked');
+                const progressPercentage = allCheckboxes.length > 0 ? (checkedCheckboxes.length / allCheckboxes.length) * 100 : 0;
+                progressBarFill.style.width = `${progressPercentage}%`;
+            }
+
+            copyChecklistBtn.addEventListener('click', () => {
+                if (!generatedChecklistData) return;
+                const formatList = (title, items) => items && items.length > 0 ? `${title}:\n${items.map(item => `  - ${item}`).join('\n')}\n` : "";
+                const checklistText = `PROJECT CHECKLIST: ${projectTypeInput.value.trim() || 'Untitled Project'}\nMethodology: ${methodologySelect.value}\n-----------------------------------\n\n${formatList('INITIATION & PLANNING', generatedChecklistData.initiation)}${formatList('EXECUTION & MONITORING', generatedChecklistData.execution)}${formatList('CLOSURE & EVALUATION', generatedChecklistData.closure)}`.trim();
+                navigator.clipboard.writeText(checklistText).then(() => {
+                    const originalText = copyChecklistBtn.innerHTML;
+                    copyChecklistBtn.innerHTML = '<i class="fas fa-check mr-2"></i> Copied!';
+                    setTimeout(() => { copyChecklistBtn.innerHTML = originalText; }, 2000);
+                }).catch(err => { console.error('Failed to copy:', err); alert('Failed to copy checklist.'); });
+            });
+
+            downloadPdfBtn.addEventListener('click', () => {
+                if (!generatedChecklistData) return;
+                try {
+                    const doc = new jsPDF();
+                    const projectTitle = projectTypeInput.value.trim() || 'Untitled Project';
+                    const methodology = methodologySelect.value;
+                    let yPos = 15; const lineSpacing = 7; const sectionSpacing = 10; const indent = 10; const pageMargin = 15;
+                    const pageWidth = doc.internal.pageSize.getWidth(); const textWidth = pageWidth - (pageMargin * 2);
+
+                    doc.setFontSize(16); doc.setFont(undefined, 'bold');
+                    doc.text(`Project Checklist: ${projectTitle}`, pageMargin, yPos); yPos += lineSpacing;
+                    doc.setFontSize(12); doc.setFont(undefined, 'normal');
+                    doc.text(`Methodology: ${methodology}`, pageMargin, yPos); yPos += sectionSpacing * 1.5;
+
+                    const addSection = (title, items) => {
+                        if (!items || items.length === 0) return;
+                        if (yPos + sectionSpacing > doc.internal.pageSize.getHeight() - pageMargin) { doc.addPage(); yPos = pageMargin; } // Check space before section title
+                        doc.setFontSize(14); doc.setFont(undefined, 'bold');
+                        doc.text(title, pageMargin, yPos); yPos += lineSpacing;
+                        doc.setFontSize(11); doc.setFont(undefined, 'normal');
+                        items.forEach(item => {
+                            const splitText = doc.splitTextToSize(`- ${item}`, textWidth - indent);
+                            const requiredHeight = splitText.length * lineSpacing;
+                            if (yPos + requiredHeight > doc.internal.pageSize.getHeight() - pageMargin) {
+                                doc.addPage(); yPos = pageMargin;
+                                // Re-add section title on new page if needed
+                                doc.setFontSize(14); doc.setFont(undefined, 'bold');
+                                doc.text(title, pageMargin, yPos); yPos += lineSpacing;
+                                doc.setFontSize(11); doc.setFont(undefined, 'normal');
+                            }
+                            doc.text(splitText, pageMargin + indent, yPos);
+                            yPos += requiredHeight;
+                        });
+                        yPos += sectionSpacing / 2; // Smaller space after items
+                    };
+
+                    addSection('Initiation & Planning', generatedChecklistData.initiation);
+                    addSection('Execution & Monitoring', generatedChecklistData.execution);
+                    addSection('Closure & Evaluation', generatedChecklistData.closure);
+
+                    const filename = `Checklist-${projectTitle.replace(/[^a-z0-9]/gi, '_')}.pdf`;
+                    doc.save(filename);
+                } catch (error) {
+                    console.error("Error generating PDF:", error);
+                    alert("An error occurred while generating the PDF. Please check the console.");
+                }
+            });
+
+            generateBtn.addEventListener('click', () => {
+                const projectType = projectTypeInput.value.trim();
+                const methodology = methodologySelect.value;
+
+                // Basic validation
+                if (!projectType) {
+                    alert('Please enter a project type.');
+                    projectTypeInput.focus();
+                    return;
+                }
+
+                // Get the correct template
+                const selectedTemplate = checklistTemplates[methodology];
+
+                if (selectedTemplate) {
+                    generatedChecklistData = selectedTemplate; // Store for PDF/Copy
+                    populateChecklistUI(selectedTemplate);
+
+                    // Update result header
+                    resultProjectType.textContent = projectType;
+                    resultMethodology.textContent = methodology;
+
+                    // Show the result section
+                    checklistResultDiv.classList.remove('hidden');
+                    checklistResultDiv.classList.add('animate__animated', 'animate__fadeInUp');
+                    checklistResultDiv.addEventListener('animationend', () => {
+                        checklistResultDiv.classList.remove('animate__animated', 'animate__fadeInUp');
+                    }, { once: true });
+
+                } else {
+                    console.error("No template found for methodology:", methodology);
+                    checklistErrorP.textContent = `Error: Could not find a checklist template for the selected methodology (${methodology}).`;
+                    checklistErrorP.classList.remove('hidden');
+                    checklistResultDiv.classList.remove('hidden'); // Show error area
+                     // Clear lists on error
+                    initiationChecklistUl.innerHTML = '<li class="text-accent-red italic">Error loading items.</li>';
+                    executionChecklistUl.innerHTML = '<li class="text-accent-red italic">Error loading items.</li>';
+                    closureChecklistUl.innerHTML = '<li class="text-accent-red italic">Error loading items.</li>';
+                    copyChecklistBtn.disabled = true;
+                    downloadPdfBtn.disabled = true;
+                }
+            });
+
+            // Smooth scrolling
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    const href = this.getAttribute('href');
+                    if (href.startsWith('#') && href.length > 1) {
+                        e.preventDefault();
+                        const targetElement = document.querySelector(href);
+                        if (targetElement) {
+                            const headerOffset = 80;
+                            const elementPosition = targetElement.getBoundingClientRect().top;
+                            const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+                            window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+                        }
+                    }
+                });
+            });
+
+        }); // End DOMContentLoaded
+    </script>
+</body>
+</html>
